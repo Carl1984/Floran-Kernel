@@ -63,19 +63,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install -y \
-          bc bison flex \
-          libssl-dev \
-          libelf-dev \
-          libdw-dev \
-          build-essential \
-          lz4 \
-          git \
-          python3 \
-          curl \
-          dwarves \
-          cpio \
-          gcc-aarch64-linux-gnu
+          sudo apt install -y bc bison flex libssl-dev libelf-dev libdw-dev build-essential lz4 git python3 curl dwarves cpio gcc-aarch64-linux-gnu
           
       - name: Clone Kernel Source and Download AOSP Clang
         run: |
@@ -110,19 +98,13 @@ jobs:
 
           KSU_TYPE="${{ inputs.ksu_type }}"
 
-          if [[ "${KSU_TYPE}" == "KernelSU-Official-susfs" ]]; then
+          if [[ "${KSU_TYPE}" == "KernelSU-Official*" ]]; then
             curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
-          elif [[ "${KSU_TYPE}" == "KernelSU-Official" ]]; then
-            curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
-
-          elif [[ "${KSU_TYPE}" == "KernelSU-Next-susfs" ]]; then
+          elif [[ "${KSU_TYPE}" == "KernelSU-Next*" ]]; then
             curl -LSs "https://raw.githubusercontent.com/pershoot/KernelSU-Next/refs/heads/dev-susfs/kernel/setup.sh" | bash -s dev-susfs
 
-          elif [[ "${KSU_TYPE}" == "ReSukiSU" ]]; then
-            curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s main
-
-          elif [[ "${KSU_TYPE}" == "ReSukiSU-susfs" ]]; then
+          elif [[ "${KSU_TYPE}" == "ReSukiSU*" ]]; then
             curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s main
 
           fi

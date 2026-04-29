@@ -114,17 +114,17 @@ jobs:
           
           if [[ "${{ inputs.ksu_type }}" == *susfs ]]; then
             git clone -b gki-android14-6.1 https://gitlab.com/simonpunk/susfs4ksu.git susfs
-            cd susfs
-            cp ./kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ..
-            cp ./kernel_patches/fs/* ../fs/
-            cp ./kernel_patches/include/linux/* ../include/linux/
-            cd ..
+            # cd susfs
+            # cp ./kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ..
+            # cp ./kernel_patches/fs/* ../fs/
+            # cp ./kernel_patches/include/linux/* ../include/linux/
+            # cd ..
             
             wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/other_patch/69_hide_stuff.patch -O ./69_hide_stuff.patch
-            cp ./susfs/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
-            cp ./susfs/kernel_patches/fs/* ./common/fs/
-            cp ./susfs/kernel_patches/include/linux/* ./common/include/linux/
-            cd ./common
+            cp ./susfs/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch .
+            cp ./susfs/kernel_patches/fs/* ./fs/
+            cp ./susfs/kernel_patches/include/linux/* ./include/linux/
+            # cd ./common
             patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
             patch -p1 -N -F 3 < 69_hide_stuff.patch || true
             cd ..         

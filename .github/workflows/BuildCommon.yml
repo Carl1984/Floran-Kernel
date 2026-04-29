@@ -131,11 +131,11 @@ jobs:
           fi
 
           cd ./common
-          wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/001-lz4.patch -O ./001-lz4.patch
-          wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/lz4armv8.S -O ./lz4armv8.S
-          wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/002-zstd.patch -O ./002-zstd.patch
-          git apply -p1 < 001-lz4.patch || true
-          patch -p1 < 002-zstd.patch || true
+          # wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/001-lz4.patch -O ./001-lz4.patch
+          # wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/lz4armv8.S -O ./lz4armv8.S
+          # wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/002-zstd.patch -O ./002-zstd.patch
+          # git apply -p1 < 001-lz4.patch || true
+          # patch -p1 < 002-zstd.patch || true
           
          
           if [[ "${{ inputs.ksu_type }}" == *susfs ]]; then

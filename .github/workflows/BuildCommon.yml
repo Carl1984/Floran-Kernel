@@ -1,4 +1,4 @@
-name: Build Kernel
+name: Build Kernel common
 
 on:
   workflow_dispatch:
@@ -65,20 +65,20 @@ jobs:
       - name: Clone Kernel Source and Download AOSP Clang
         run: |
           if [[ "${{ inputs.rom_source }}" == "YAAP" ]]; then
-            git clone --depth=1 -b sixteen https://github.com/Sukimoka/android_kernel_oneplus_sm8650.git sm8650
-            git clone --depth=1 -b sixteen https://github.com/Sukimoka/android_kernel_oneplus_sm8650-modules.git sm8650-modules
+            git clone --depth=1 -b sixteen https://github.com/Sukimoka/android_kernel_oneplus_sm8650.git common
+            git clone --depth=1 -b sixteen https://github.com/Sukimoka/android_kernel_oneplus_sm8650-modules.git common-modules
 
           elif [[ "${{ inputs.rom_source }}" == "LineageOS" ]]; then
-            git clone --depth=1 -b lineage-23.2 https://github.com/LineageOS/android_kernel_oneplus_sm8650.git sm8650
-            git clone --depth=1 -b lineage-23.2 https://github.com/LineageOS/android_kernel_oneplus_sm8650-modules.git sm8650-modules
+            git clone --depth=1 -b lineage-23.2 https://github.com/LineageOS/android_kernel_oneplus_sm8650.git common
+            git clone --depth=1 -b lineage-23.2 https://github.com/LineageOS/android_kernel_oneplus_sm8650-modules.git common-modules
 
           elif [[ "${{ inputs.rom_source }}" == "Crdroid" ]]; then
-            git clone --depth=1 -b 16.0 https://github.com/crdroidandroid/android_kernel_oneplus_sm8650.git sm8650
-            git clone --depth=1 -b 16.0 https://github.com/crdroidandroid/android_kernel_oneplus_sm8650-modules.git sm8650-modules
+            git clone --depth=1 -b 16.0 https://github.com/crdroidandroid/android_kernel_oneplus_sm8650.git common
+            git clone --depth=1 -b 16.0 https://github.com/crdroidandroid/android_kernel_oneplus_sm8650-modules.git common-modules
 
           elif [[ "${{ inputs.rom_source }}" == "PixelOS" ]]; then
-            git clone --depth=1 -b sixteen-qpr2 https://github.com/PixelOS-Devices/android_kernel_oneplus_sm8650.git sm8650
-            git clone --depth=1 -b sixteen-qpr2 https://github.com/PixelOS-Devices/android_kernel_oneplus_sm8650-modules.git sm8650-modules
+            git clone --depth=1 -b sixteen-qpr2 https://github.com/PixelOS-Devices/android_kernel_oneplus_sm8650.git common
+            git clone --depth=1 -b sixteen-qpr2 https://github.com/PixelOS-Devices/android_kernel_oneplus_sm8650-modules.git common-modules
 
           fi
 
@@ -97,7 +97,7 @@ jobs:
           export LLVM_IAS=1
           export CC=clang CXX=clang++ HOSTCC=clang HOSTCXX=clang++ LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip
 
-          cd sm8650
+          cd common
 
           if [[ "${{ inputs.ksu_type }}" == KernelSU-Official* ]]; then
             curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
@@ -120,34 +120,23 @@ jobs:
             cp ./kernel_patches/include/linux/* ../include/linux/
             cd ..
             
+            wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/other_patch/69_hide_stuff.patch -O ./common/69_hide_stuff.patch
+            cp ./susfs/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
+            cp ./susfs/kernel_patches/fs/* ./common/fs/
+            cp ./susfs/kernel_patches/include/linux/* ./common/include/linux/
+            cd ./common
             patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
-
-            if [ -f fs/namespace.c ] && ! grep -q "linux/susfs_def.h" fs/namespace.c; then
-              echo "正在修复SUSFS"
-              
-              sed -i '/extern bool susfs_is_sdcard_android_data_decrypted/d' ./fs/namespace.c
-              sed -i '/extern bool susfs_is_current_ksu_domain/d' ./fs/namespace.c
-              
-              echo '#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT' > /tmp/susfs_fix.txt
-              echo '#include <linux/susfs_def.h>' >> /tmp/susfs_fix.txt
-              echo 'extern bool susfs_is_current_ksu_domain(void);' >> /tmp/susfs_fix.txt
-              echo '#include <linux/jump_label.h>' >> /tmp/susfs_fix.txt
-              echo 'DECLARE_STATIC_KEY_FALSE(susfs_is_sdcard_android_data_not_decrypted);' >> /tmp/susfs_fix.txt
-              echo '' >> /tmp/susfs_fix.txt
-              echo '#ifndef CL_COPY_MNT_NS' >> /tmp/susfs_fix.txt
-              echo '#define CL_COPY_MNT_NS BIT(25)' >> /tmp/susfs_fix.txt
-              echo '#endif' >> /tmp/susfs_fix.txt
-              echo '' >> /tmp/susfs_fix.txt
-              echo 'static DEFINE_IDA(susfs_mnt_id_ida);' >> /tmp/susfs_fix.txt
-              echo 'static DEFINE_IDA(susfs_mnt_group_ida);' >> /tmp/susfs_fix.txt
-              echo '#endif' >> /tmp/susfs_fix.txt
-
-              sed -i '/#include "internal.h"/r /tmp/susfs_fix.txt' ./fs/namespace.c
-              rm -f /tmp/susfs_fix.txt
-              echo "SUSFS修复完成"
-            fi
+            patch -p1 -N -F 3 < 69_hide_stuff.patch || true
+            cd ..         
           fi
 
+          cd ./common
+          wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/001-lz4.patch -O ./001-lz4.patch
+          wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/lz4armv8.S -O ./lz4armv8.S
+          wget https://github.com/cctv18/oppo_oplus_realme_sm8650/raw/refs/heads/main/zram_patch/002-zstd.patch -O ./002-zstd.patch
+          git apply -p1 < 001-lz4.patch || true
+          patch -p1 < 002-zstd.patch || true
+          
          
           if [[ "${{ inputs.ksu_type }}" == *susfs ]]; then
             echo "CONFIG_KSU_SUSFS=y" >> arch/arm64/configs/gki_defconfig
@@ -239,7 +228,7 @@ jobs:
           fi
           ZIP_NAME="${ZIP_PREFIX}-$(date -u +"%m%d")"
           git clone --depth=1 https://github.com/Kernel-SU/AnyKernel3.git
-          cp sm8650/out/arch/arm64/boot/Image AnyKernel3/Image
+          cp common/out/arch/arm64/boot/Image AnyKernel3/Image
           cd AnyKernel3
           zip -r9 ../"${ZIP_NAME}.zip" * -x .git
 

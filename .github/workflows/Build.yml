@@ -24,6 +24,7 @@ on:
           - KernelSU-Official-susfs
           - KernelSU-Next-susfs
           - ReSukiSU-susfs
+          - None
 
       netfilter:
         description: "Enable IPSET & IPv6_NAT"
@@ -127,21 +128,15 @@ jobs:
               
               sed -i '/extern bool susfs_is_sdcard_android_data_decrypted/d' ./fs/namespace.c
               sed -i '/extern bool susfs_is_current_ksu_domain/d' ./fs/namespace.c
-              
               echo '#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT' > /tmp/susfs_fix.txt
               echo '#include <linux/susfs_def.h>' >> /tmp/susfs_fix.txt
               echo 'extern bool susfs_is_current_ksu_domain(void);' >> /tmp/susfs_fix.txt
-              echo '#include <linux/jump_label.h>' >> /tmp/susfs_fix.txt
-              echo 'DECLARE_STATIC_KEY_FALSE(susfs_is_sdcard_android_data_not_decrypted);' >> /tmp/susfs_fix.txt
+              echo 'extern struct static_key_true susfs_is_sdcard_android_data_not_decrypted;' >> /tmp/susfs_fix.txt
               echo '' >> /tmp/susfs_fix.txt
               echo '#ifndef CL_COPY_MNT_NS' >> /tmp/susfs_fix.txt
               echo '#define CL_COPY_MNT_NS BIT(25)' >> /tmp/susfs_fix.txt
               echo '#endif' >> /tmp/susfs_fix.txt
-              echo '' >> /tmp/susfs_fix.txt
-              echo 'static DEFINE_IDA(susfs_mnt_id_ida);' >> /tmp/susfs_fix.txt
-              echo 'static DEFINE_IDA(susfs_mnt_group_ida);' >> /tmp/susfs_fix.txt
               echo '#endif' >> /tmp/susfs_fix.txt
-
               sed -i '/#include "internal.h"/r /tmp/susfs_fix.txt' ./fs/namespace.c
               rm -f /tmp/susfs_fix.txt
               echo "SUSFS修复完成"
@@ -164,6 +159,8 @@ jobs:
           touch ./.scmversion
           sed -i "s|CONFIG_MODULE_SIG_PROTECT=y|CONFIG_MODULE_SIG_PROTECT=n|" arch/arm64/configs/gki_defconfig
           echo "CONFIG_TMPFS_XATTR=y" >> arch/arm64/configs/gki_defconfig
+     
+          echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> arch/arm64/configs/gki_defconfig
 
           if [[ "${{ inputs.ccm }}" == "true" ]]; then
             echo "CONFIG_TCP_CONG_ADVANCED=y" >> arch/arm64/configs/gki_defconfig
@@ -220,7 +217,7 @@ jobs:
           fi
 
           make O=out gki_defconfig vendor/pineapple_GKI.config vendor/oplus/pineapple_GKI.config
-          make -j2 O=out Image
+          make -j$(nproc) O=out Image
 
       - name: Make AnyKernel3
         run: |
@@ -236,6 +233,8 @@ jobs:
             ZIP_PREFIX="ReSukiSU"
           elif [[ "${{ inputs.ksu_type }}" == "ReSukiSU-susfs" ]]; then
             ZIP_PREFIX="ReSukiSU-SUSFS"
+          elif [[ "${{ inputs.ksu_type }}" == "None" ]]; then
+            ZIP_PREFIX="Non-KSU"
           fi
           ZIP_NAME="${ZIP_PREFIX}-$(date -u +"%m%d")"
           git clone --depth=1 https://github.com/Kernel-SU/AnyKernel3.git
@@ -283,6 +282,8 @@ jobs:
             KSU_TYPENAME="ReSukiSU"
           elif [[ "${{ inputs.ksu_type }}" == "ReSukiSU-susfs" ]]; then
             KSU_TYPENAME="ReSukiSU + SUSFS"
+          elif [[ "${{ inputs.ksu_type }}" == "None" ]]; then
+            KSU_TYPENAME="Non-KSU"
           fi
           echo "KSU_TYPENAME=${KSU_TYPENAME}" >> $GITHUB_ENV
 
